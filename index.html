@@ -867,12 +867,49 @@ function Commander (client) {
     }
     this._input.value = lintLISP(value)
   }
-  this.splash = `; Ronin v2.50
-(def logo-path "M60,60 L195,60 A45,45 0 0,1 240,105 A45,45 0 0,1 195,150 L60,150 M195,150 A45,45 0 0,1 240,195 L240,240 ")
-(clear)
-(resize 600 600)
-(stroke 
-  (svg 140 140 logo-path) "black" 7)`
+  this.splash = `; animated recusive spiral
+  (resize 800 800)
+(def frame 
+  (get-frame))
+
+;
+(defn rec 
+  (v) 
+  (if 
+    (gt v 0) 
+    ( 
+      ; params 
+      (def spiral-x 
+        (add frame:c 
+          (mul 
+            (cos 
+              (add 
+                (div v 17) 
+                (time 0.001))) 
+            (div v 2)))) 
+      (def spiral-y 
+        (add frame:m 
+          (mul 
+            (sin 
+              (div v 11)) 
+            (div v 2)))) 
+      (def spiral-r 
+        (div v 2)) 
+      ; draw 
+      (stroke 
+        (circle spiral-x spiral-y spiral-r) 
+        (color (add (mul (sin (add (mul .3 v) 0)) 127) 128) (add (mul (sin (add (mul .3 v) 2)) 127) 128) (add (mul (sin (add (mul .3 v) 4)) 127) 128) 0.1) 1)
+      (rec 
+        (sub v 0.5)))))
+ 
+;
+(defn redraw () 
+  
+    (clear) 
+    (rec 300))
+
+;
+(on "animate" redraw)`
 }
 function lintLISP (str) {
   let val = str.replace(/\n/g, '').replace(/ \)/g, ')').replace(/ +(?= )/g, '').replace(/\( \(/g, '((').replace(/\) \)/g, '))').trim()
