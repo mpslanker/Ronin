@@ -49,11 +49,11 @@ function Client () {
     this.acels.set('File', 'Open', 'CmdOrCtrl+U', () => { this.source.open('lisp', this.whenOpen) })
     this.acels.set('View', 'Toggle Guides', 'CmdOrCtrl+Shift+H', () => { this.surface.toggleGuides() })
     this.acels.set('View', 'Toggle Commander', 'CmdOrCtrl+Shift+C', () => { this.commander.toggle() })
-    this.acels.set('View', 'Expand Commander', 'CmdOrCtrl+Shift+X', () => { this.commander.toggle(true) })
+    this.acels.set('View', 'Expand Commander', 'CmdOrCtrl+Shift+X', () => { this.commander.toggleExpand() })
     this.acels.set('Project', 'Eval', 'CmdOrCtrl+Enter', () => { this.commander.eval() })
     this.acels.set('Project', 'Eval Selection', 'Alt+Enter', () => { this.commander.evalSelection() })
     this.acels.set('Project', 'Re-Indent', 'CmdOrCtrl+Shift+I', () => { this.commander.lint() })
-    this.acels.set('Project', 'Clean', 'Escape', () => { this.commander.cleanup() })
+    // this.acels.set('Project', 'Clean', 'Escape', () => { this.commander.cleanup() })
     this.acels.route(this)
   }
 

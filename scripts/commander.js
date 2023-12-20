@@ -3,6 +3,7 @@
 function Commander (client) {
   this.el = document.createElement('div')
   this.el.id = 'commander'
+  this.el.className = "min"
   this._input = document.createElement('div')
   this._input.id = "editor"
   this._status = document.createElement('div'); this._status.id = 'status'
@@ -11,6 +12,7 @@ function Commander (client) {
   this._eval = document.createElement('a'); this._eval.id = 'eval'
 
   this.isVisible = true
+  this.isExpanded = false
 
   this.install = function (host) {
     this.el.appendChild(this._input)
@@ -165,9 +167,9 @@ function Commander (client) {
 
   // Display
 
-  this.show = (expand = false) => {
-    if (this.isVisible === true && expand !== true) { return }
-    client.el.className = expand ? 'expand' : ''
+  this.show = () => {
+    if (this.isVisible === true) { return }
+    client.el.className = this.isExpanded ? 'expand' : 'min'
     this.isVisible = true
     this._editor.focus()
   }
@@ -177,12 +179,33 @@ function Commander (client) {
     client.el.className = 'hidden'
     this.isVisible = false
     document.body.focus();
-
   }
 
-  this.toggle = (expand = false) => {
+  this.expand = () => {
+    if (this.isExpanded === true) { return }
+    client.el.className = 'expand'
+    this.isExpanded = true
+    this._editor.focus()
+  }
+
+  this.collapse = () => {
+    if (this.isExpanded !== true) { return }
+    client.el.className = 'min'
+    this.isExpanded = false
+    this._editor.focus()
+  }
+
+  this.toggleExpand = () => {
+    if (this.isExpanded) {
+      this.collapse();
+    } else {
+      this.expand()
+    }
+  }
+
+  this.toggle = () => {
     if (this.isVisible !== true) {
-      this.show(expand)
+      this.show()
     } else {
       this.hide()
     }
