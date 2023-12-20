@@ -37,7 +37,15 @@
         value: "(clear)",
         language: 'clojure',
         minimap: {enabled: false},
-        theme: 'vs-dark'
+        theme: 'vs-dark',
+        scrollBeyondLastColumn: false,
+        scrollBeyondLastLine: false,
+        automaticLayout: true,
+        wordWrap: "bounded",
+        scrollbar: {
+          vertical: "auto",
+          horizontal: "auto"
+        }
       });
       client.commander.loadCache()
     });
