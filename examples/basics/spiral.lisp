@@ -29,9 +29,9 @@
       ; draw 
       (stroke 
         (circle spiral-x spiral-y spiral-r) 
-        (color 114 222 194 0.1) 1) 
+        (color (add (mul (sin (add (mul .3 v) 0)) 127) 128) (add (mul (sin (add (mul .3 v) 2)) 127) 128) (add (mul (sin (add (mul .3 v) 4)) 127) 128) 0.1) 1)
       (rec 
-        (sub v 0.3)))))
+        (sub v 0.5)))))
  
 ;
 (defn redraw () 
