@@ -19,25 +19,24 @@ function Commander (client) {
     this._status.appendChild(this._eval)
     this.el.appendChild(this._status)
     host.appendChild(this.el)
-    // this._eval.setAttribute('title', 'Eval(c-R)')
-    // this._input.setAttribute('autocomplete', 'off')
-    // this._input.setAttribute('autocorrect', 'off')
-    // this._input.setAttribute('autocapitalize', 'off')
-    // this._input.setAttribute('spellcheck', 'false')
-    // this._input.addEventListener('input', this.onInput)
-    // this._input.addEventListener('click', this.onClick)
     this._eval.addEventListener('click', () => { this.eval() })
 
-    // NOTE: I really don't like tab hiding the menubar
-    // this._input.onkeydown = (e) => {
-    //   if (e.keyCode === 9 || e.which === 9) { e.preventDefault(); this.inject('  ') }
-    // }
     client.surface.maximize()
   }
 
   this.start = function () {
     this.show()
     this._editor.setValue(this.splash)
+
+
+    this._editor.onDidChangeCursorPosition(() => {
+      this.setStatus()
+    });
+
+    this._editor.onDidChangeModelContent(() => {
+      console.log("Model Changed...")
+    });
+
     setTimeout(() => { this.eval() }, 1000)
     this.setStatus('Ready.')
   }
@@ -50,10 +49,9 @@ function Commander (client) {
   }
 
   this.evalSelection = () => {
-    console.log("evaulating selection!!")
-    // TODO: This is horribly broke but math is hard at 3:54 AM
-    var sel = this._editor.getSelection()
-    const value = this._editor.getValue().substr((sel.startLineNumber * sel.startColumn), (sel.endLineNumber * sel.endColumn))
+    var selStart = this._editor.getModel().getOffsetAt(this._editor.getSelection().getStartPosition())
+    var selLength = this._editor.getModel().getOffsetAt(this._editor.getSelection().getEndPosition()) - selStart
+    const value = this._editor.getValue().substr(selStart, selLength)
     console.log(value)
     client.lain.run(`(${value})`)
     this.feedback()
@@ -78,14 +76,6 @@ function Commander (client) {
 
   }
 
-  this.onInput = () => {
-    this.setStatus()
-  }
-
-  this.onClick = () => {
-    this.setStatus()
-  }
-
   this.clean = function (input) {
     const keywords = ['$pos+', '$pos', '$rect', '$line', '$x', '$y', '$xy']
     for (const word of keywords) {
@@ -96,6 +86,7 @@ function Commander (client) {
 
   this.setStatus = function (msg) {
     // Logs
+    console.log(msg)
     if (msg && msg !== this._log.textContent) {
       this._log.textContent = `${msg}`
     }
@@ -103,9 +94,6 @@ function Commander (client) {
   }
 
   // Injection
-
-  // TODO: no effing clue why this doesn't seem to work here
-  // this.cache = this._editor.getValue()
 
   this.loadCache = function() {
     this.cache = this._editor.getValue()
@@ -116,12 +104,14 @@ function Commander (client) {
     this.cache = this._editor.getValue()
   }
 
-  this.inject = function (injection, at = this._editor.getSelection().getSelectionStart()) {
-    this._editor.setValue(this._editor.getValue().substring(0, this._editor.getSelection().getSelectionStart()) + injection + this._editor.getValue().substring(this._editor.getSelection().getEndPosition()))
+  this.inject = function (injection, at = this._editor.getModel().getOffsetAt(this._editor.getSelection().getStartPosition())) {
+    console.log("Hi from inject")
+    this._editor.setValue(this._editor.getValue().substring(0, at) + injection + this._editor.getValue().substring(this._editor.getModel().getOffsetAt(this._editor.getSelection().getEndPosition())))
     this._editor.getSelection().setEndPositon(at + injection.length)
   }
 
   this.injectPath = function (path) {
+    console.log("injectPath")
     if (this._editor.getValue().indexOf('$') < 0) { return }
     this._editor.setValue(this._editor.getValue().replace('$path', `"${path}"`))
   }
@@ -179,14 +169,14 @@ function Commander (client) {
     if (this.isVisible === true && expand !== true) { return }
     client.el.className = expand ? 'expand' : ''
     this.isVisible = true
-    this._input.focus()
+    this._editor.focus()
   }
 
   this.hide = () => {
     if (this.isVisible !== true) { return }
     client.el.className = 'hidden'
     this.isVisible = false
-    this._input.blur()
+    this._editor.blur()
   }
 
   this.toggle = (expand = false) => {
@@ -209,8 +199,10 @@ function Commander (client) {
   // Docs
 
   this.getCurrentWord = () => {
-    const pos = this._editor.getValue().substr(0, this._editor.getSelection().getSelectionStart()).lastIndexOf('(')
-    return this._editor.getValue().substr(pos).split(' ')[0].replace(/\(/g, '').replace(/\)/g, '').trim()
+    const pos = this._editor.getValue().substr(0, this._editor.getModel().getOffsetAt(this._editor.getSelection().getStartPosition())).lastIndexOf('(')
+    var word = this._editor.getValue().substr(pos).split(' ')[0].replace(/\(/g, '').replace(/\)/g, '').trim()
+    console.log("Current word: " + word)
+    return word
   }
 
   this.getCurrentFunction = () => {
