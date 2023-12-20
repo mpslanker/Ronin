@@ -176,7 +176,7 @@ function Commander (client) {
     if (this.isVisible !== true) { return }
     client.el.className = 'hidden'
     this.isVisible = false
-    this._editor.blur()
+    // this._editor.blur()
   }
 
   this.toggle = (expand = false) => {
