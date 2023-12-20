@@ -40,11 +40,11 @@ function Client () {
     window.addEventListener('dragover', this.onDrag)
     window.addEventListener('drop', this.onDrop)
 
-    this.acels.set('∷', 'Toggle Menubar', 'Tab', () => { this.acels.toggle() })
+    // this.acels.set('∷', 'Toggle Menubar', 'Tab', () => { this.acels.toggle() }) // Again, I really hate toggling the menubar
     this.acels.set('∷', 'Open Theme', 'CmdOrCtrl+Shift+O', () => { this.theme.open() })
     this.acels.set('∷', 'Reset Theme', 'CmdOrCtrl+Backspace', () => { this.theme.reset() })
     this.acels.set('File', 'New', 'CmdOrCtrl+N', () => { this.source.new(); this.surface.clear(); this.commander.clear() })
-    this.acels.set('File', 'Save', 'CmdOrCtrl+S', () => { this.source.write('ronin', 'lisp', this.commander._input.value, 'text/plain') })
+    this.acels.set('File', 'Save', 'CmdOrCtrl+S', () => { this.source.write('ronin', 'lisp', this.commander._editor.getValue(), 'text/plain') })
     this.acels.set('File', 'Export Image', 'CmdOrCtrl+E', () => { this.source.write('ronin', 'png', this.surface.el.toDataURL('image/png', 1.0), 'image/png') })
     this.acels.set('File', 'Open', 'CmdOrCtrl+U', () => { this.source.open('lisp', this.whenOpen) })
     this.acels.set('View', 'Toggle Guides', 'CmdOrCtrl+Shift+H', () => { this.surface.toggleGuides() })

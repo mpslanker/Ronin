@@ -18,6 +18,7 @@ body { margin:0px; padding:0px; overflow:hidden; font-family:"input_mono_regular
 #ronin #wrapper { overflow: hidden; position: relative; }
 #ronin #wrapper #commander { z-index: 9000;position: relative;width: calc(50vw - 30px);height: calc(100vh - 60px);-webkit-app-region: no-drag;padding-right: 30px;transition: margin-left 250ms;}
 #ronin #wrapper #commander textarea { background: none; width: 100%; height: calc(100vh - 105px); resize: none; font-size: 12px;line-height: 15px; padding-right: 15px}
+#ronin #wrapper #commander #editor { background: none; width: 100%; height: calc(100vh - 105px); resize: none; font-size: 12px;line-height: 15px; padding-right: 15px}
 #ronin #wrapper #commander #status { position: absolute; bottom: 0px; line-height: 15px; height: 30px; overflow: hidden; width: calc(100% - 75px); padding-left:45px;}
 #ronin #wrapper #commander #status #eval { display: block; width: 26px; height: 26px; position: absolute; top: 0px; border-radius: 15px; left:0px; cursor: pointer; border:2px solid #fff; transition: background-color 250ms, border-color 250ms}
 #ronin #wrapper #commander #status #eval:hover { background: none }

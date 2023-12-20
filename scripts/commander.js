@@ -3,7 +3,8 @@
 function Commander (client) {
   this.el = document.createElement('div')
   this.el.id = 'commander'
-  this._input = document.createElement('textarea')
+  this._input = document.createElement('div')
+  this._input.id = "editor"
   this._status = document.createElement('div'); this._status.id = 'status'
   this._log = document.createElement('div'); this._log.id = 'log'
   this._docs = document.createElement('div'); this._docs.id = 'help'
@@ -18,43 +19,48 @@ function Commander (client) {
     this._status.appendChild(this._eval)
     this.el.appendChild(this._status)
     host.appendChild(this.el)
-    this._eval.setAttribute('title', 'Eval(c-R)')
-    this._input.setAttribute('autocomplete', 'off')
-    this._input.setAttribute('autocorrect', 'off')
-    this._input.setAttribute('autocapitalize', 'off')
-    this._input.setAttribute('spellcheck', 'false')
-    this._input.addEventListener('input', this.onInput)
-    this._input.addEventListener('click', this.onClick)
+    // this._eval.setAttribute('title', 'Eval(c-R)')
+    // this._input.setAttribute('autocomplete', 'off')
+    // this._input.setAttribute('autocorrect', 'off')
+    // this._input.setAttribute('autocapitalize', 'off')
+    // this._input.setAttribute('spellcheck', 'false')
+    // this._input.addEventListener('input', this.onInput)
+    // this._input.addEventListener('click', this.onClick)
     this._eval.addEventListener('click', () => { this.eval() })
 
-    this._input.onkeydown = (e) => {
-      if (e.keyCode === 9 || e.which === 9) { e.preventDefault(); this.inject('  ') }
-    }
+    // NOTE: I really don't like tab hiding the menubar
+    // this._input.onkeydown = (e) => {
+    //   if (e.keyCode === 9 || e.which === 9) { e.preventDefault(); this.inject('  ') }
+    // }
     client.surface.maximize()
   }
 
   this.start = function () {
     this.show()
-    this._input.value = this.splash
+    this._editor.setValue(this.splash)
     setTimeout(() => { this.eval() }, 1000)
     this.setStatus('Ready.')
   }
 
-  this.eval = (txt = this._input.value) => {
-    if (this._input.value.indexOf('$') > -1) { txt = this.clean(txt) }
+  this.eval = (txt = this._editor.getValue()) => {
+    if (this._editor.getValue().indexOf('$') > -1) { txt = this.clean(txt) }
     client.bindings = {}
     client.lain.run(`(${txt})`)
     this.feedback()
   }
 
   this.evalSelection = () => {
-    const value = this._input.value.substr(this._input.selectionStart, this._input.selectionEnd)
+    console.log("evaulating selection!!")
+    // TODO: This is horribly broke but math is hard at 3:54 AM
+    var sel = this._editor.getSelection()
+    const value = this._editor.getValue().substr((sel.startLineNumber * sel.startColumn), (sel.endLineNumber * sel.endColumn))
+    console.log(value)
     client.lain.run(`(${value})`)
     this.feedback()
   }
 
   this.load = function (txt) {
-    this._input.value = txt
+    this._editor.setValue(txt)
     this.eval(txt)
   }
 
@@ -63,7 +69,7 @@ function Commander (client) {
   }
 
   this.cleanup = function () {
-    this._input.value = this.clean(this._input.value)
+    this._editor.getValue() = this.clean(this._editor.getValue())
     this.lint()
     this.eval()
   }
@@ -98,21 +104,26 @@ function Commander (client) {
 
   // Injection
 
-  this.cache = this._input.value
+  // TODO: no effing clue why this doesn't seem to work here
+  // this.cache = this._editor.getValue()
 
-  this.capture = function () {
-    if (this._input.value.indexOf('$') < 0) { return }
-    this.cache = this._input.value
+  this.loadCache = function() {
+    this.cache = this._editor.getValue()
   }
 
-  this.inject = function (injection, at = this._input.selectionStart) {
-    this._input.value = this._input.value.substring(0, this._input.selectionStart) + injection + this._input.value.substring(this._input.selectionEnd)
-    this._input.selectionEnd = at + injection.length
+  this.capture = function () {
+    if (this._editor.getValue().indexOf('$') < 0) { return }
+    this.cache = this._editor.getValue()
+  }
+
+  this.inject = function (injection, at = this._editor.getSelection().getSelectionStart()) {
+    this._editor.setValue(this._editor.getValue().substring(0, this._editor.getSelection().getSelectionStart()) + injection + this._editor.getValue().substring(this._editor.getSelection().getEndPosition()))
+    this._editor.getSelection().setEndPositon(at + injection.length)
   }
 
   this.injectPath = function (path) {
-    if (this._input.value.indexOf('$') < 0) { return }
-    this._input.value = this._input.value.replace('$path', `"${path}"`)
+    if (this._editor.getValue().indexOf('$') < 0) { return }
+    this._editor.setValue(this._editor.getValue().replace('$path', `"${path}"`))
   }
 
   // Helpers
@@ -138,14 +149,14 @@ function Commander (client) {
 
     if (shape[word]) {
       if (append) {
-        this._input.value = this.cache.replace('$' + word + '+', this.template(shape[word], word) + ' $' + word + '+')
+        this._editor.setValue(this.cache.replace('$' + word + '+', this.template(shape[word], word) + ' $' + word + '+'))
       } else {
-        this._input.value = this.cache.replace('$' + word, this.template(shape[word], word))
+        this._editor.setValue(this.cache.replace('$' + word, this.template(shape[word], word)))
       }
     }
 
     if (end === true) {
-      this.cache = this._input.value
+      this.cache = this._editor.getValue()
     }
     if (run === true) {
       this.eval()
@@ -187,7 +198,7 @@ function Commander (client) {
   }
 
   this.length = function () {
-    return this._input.value.split('\n').length
+    return this._editor.getValue().split('\n').length
   }
 
   this.feedback = function () {
@@ -198,8 +209,8 @@ function Commander (client) {
   // Docs
 
   this.getCurrentWord = () => {
-    const pos = this._input.value.substr(0, this._input.selectionStart).lastIndexOf('(')
-    return this._input.value.substr(pos).split(' ')[0].replace(/\(/g, '').replace(/\)/g, '').trim()
+    const pos = this._editor.getValue().substr(0, this._editor.getSelection().getSelectionStart()).lastIndexOf('(')
+    return this._editor.getValue().substr(pos).split(' ')[0].replace(/\(/g, '').replace(/\)/g, '').trim()
   }
 
   this.getCurrentFunction = () => {
@@ -225,11 +236,11 @@ function Commander (client) {
   }
 
   this.lint = function () {
-    const value = this._input.value
+    const value = this._editor.getValue()
     if (value.split('(').length !== value.split(')').length) {
       return client.log('Uneven number of parens.')
     }
-    this._input.value = lintLISP(value)
+    this._editor.setValue(lintLISP(value))
   }
 
   // Splash
