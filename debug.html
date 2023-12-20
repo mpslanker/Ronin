@@ -35,7 +35,9 @@
     require(['vs/editor/editor.main'], function () {
       client.commander._editor = monaco.editor.create(document.getElementById('editor'), {
         value: "(clear)",
-        language: 'clojure'
+        language: 'clojure',
+        minimap: {enabled: false},
+        theme: 'vs-dark'
       });
       client.commander.loadCache()
     });
