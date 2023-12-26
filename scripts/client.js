@@ -40,20 +40,20 @@ function Client () {
     window.addEventListener('dragover', this.onDrag)
     window.addEventListener('drop', this.onDrop)
 
-    this.acels.set('∷', 'Toggle Menubar', 'Tab', () => { this.acels.toggle() })
+    // this.acels.set('∷', 'Toggle Menubar', 'Tab', () => { this.acels.toggle() }) // Again, I really hate toggling the menubar
     this.acels.set('∷', 'Open Theme', 'CmdOrCtrl+Shift+O', () => { this.theme.open() })
     this.acels.set('∷', 'Reset Theme', 'CmdOrCtrl+Backspace', () => { this.theme.reset() })
     this.acels.set('File', 'New', 'CmdOrCtrl+N', () => { this.source.new(); this.surface.clear(); this.commander.clear() })
-    this.acels.set('File', 'Save', 'CmdOrCtrl+S', () => { this.source.write('ronin', 'lisp', this.commander._input.value, 'text/plain') })
+    this.acels.set('File', 'Save', 'CmdOrCtrl+S', () => { this.source.write('ronin', 'lisp', this.commander._editor.getValue(), 'text/plain') })
     this.acels.set('File', 'Export Image', 'CmdOrCtrl+E', () => { this.source.write('ronin', 'png', this.surface.el.toDataURL('image/png', 1.0), 'image/png') })
     this.acels.set('File', 'Open', 'CmdOrCtrl+U', () => { this.source.open('lisp', this.whenOpen) })
     this.acels.set('View', 'Toggle Guides', 'CmdOrCtrl+Shift+H', () => { this.surface.toggleGuides() })
-    this.acels.set('View', 'Toggle Commander', 'CmdOrCtrl+K', () => { this.commander.toggle() })
-    this.acels.set('View', 'Expand Commander', 'CmdOrCtrl+Shift+K', () => { this.commander.toggle(true) })
+    this.acels.set('View', 'Toggle Commander', 'CmdOrCtrl+Shift+C', () => { this.commander.toggle() })
+    this.acels.set('View', 'Expand Commander', 'CmdOrCtrl+Shift+X', () => { this.commander.toggleExpand() })
     this.acels.set('Project', 'Eval', 'CmdOrCtrl+Enter', () => { this.commander.eval() })
     this.acels.set('Project', 'Eval Selection', 'Alt+Enter', () => { this.commander.evalSelection() })
     this.acels.set('Project', 'Re-Indent', 'CmdOrCtrl+Shift+I', () => { this.commander.lint() })
-    this.acels.set('Project', 'Clean', 'Escape', () => { this.commander.cleanup() })
+    // this.acels.set('Project', 'Clean', 'Escape', () => { this.commander.cleanup() })
     this.acels.route(this)
   }
 

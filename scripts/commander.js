@@ -3,13 +3,16 @@
 function Commander (client) {
   this.el = document.createElement('div')
   this.el.id = 'commander'
-  this._input = document.createElement('textarea')
+  this.el.className = "min"
+  this._input = document.createElement('div')
+  this._input.id = "editor"
   this._status = document.createElement('div'); this._status.id = 'status'
   this._log = document.createElement('div'); this._log.id = 'log'
   this._docs = document.createElement('div'); this._docs.id = 'help'
   this._eval = document.createElement('a'); this._eval.id = 'eval'
 
   this.isVisible = true
+  this.isExpanded = false
 
   this.install = function (host) {
     this.el.appendChild(this._input)
@@ -18,43 +21,46 @@ function Commander (client) {
     this._status.appendChild(this._eval)
     this.el.appendChild(this._status)
     host.appendChild(this.el)
-    this._eval.setAttribute('title', 'Eval(c-R)')
-    this._input.setAttribute('autocomplete', 'off')
-    this._input.setAttribute('autocorrect', 'off')
-    this._input.setAttribute('autocapitalize', 'off')
-    this._input.setAttribute('spellcheck', 'false')
-    this._input.addEventListener('input', this.onInput)
-    this._input.addEventListener('click', this.onClick)
     this._eval.addEventListener('click', () => { this.eval() })
 
-    this._input.onkeydown = (e) => {
-      if (e.keyCode === 9 || e.which === 9) { e.preventDefault(); this.inject('  ') }
-    }
     client.surface.maximize()
   }
 
   this.start = function () {
     this.show()
-    this._input.value = this.splash
+    this._editor.setValue(this.splash)
+
+
+    this._editor.onDidChangeCursorPosition(() => {
+      this.setStatus()
+    });
+
+    this._editor.onDidChangeModelContent(() => {
+      console.log("Model Changed...")
+    });
+
     setTimeout(() => { this.eval() }, 1000)
     this.setStatus('Ready.')
   }
 
-  this.eval = (txt = this._input.value) => {
-    if (this._input.value.indexOf('$') > -1) { txt = this.clean(txt) }
+  this.eval = (txt = this._editor.getValue()) => {
+    if (this._editor.getValue().indexOf('$') > -1) { txt = this.clean(txt) }
     client.bindings = {}
     client.lain.run(`(${txt})`)
     this.feedback()
   }
 
   this.evalSelection = () => {
-    const value = this._input.value.substr(this._input.selectionStart, this._input.selectionEnd)
+    var selStart = this._editor.getModel().getOffsetAt(this._editor.getSelection().getStartPosition())
+    var selLength = this._editor.getModel().getOffsetAt(this._editor.getSelection().getEndPosition()) - selStart
+    const value = this._editor.getValue().substr(selStart, selLength)
+    console.log(value)
     client.lain.run(`(${value})`)
     this.feedback()
   }
 
   this.load = function (txt) {
-    this._input.value = txt
+    this._editor.setValue(txt)
     this.eval(txt)
   }
 
@@ -63,21 +69,13 @@ function Commander (client) {
   }
 
   this.cleanup = function () {
-    this._input.value = this.clean(this._input.value)
+    this._editor.getValue() = this.clean(this._editor.getValue())
     this.lint()
     this.eval()
   }
 
   this.update = function () {
 
-  }
-
-  this.onInput = () => {
-    this.setStatus()
-  }
-
-  this.onClick = () => {
-    this.setStatus()
   }
 
   this.clean = function (input) {
@@ -90,6 +88,7 @@ function Commander (client) {
 
   this.setStatus = function (msg) {
     // Logs
+    console.log(msg)
     if (msg && msg !== this._log.textContent) {
       this._log.textContent = `${msg}`
     }
@@ -98,21 +97,25 @@ function Commander (client) {
 
   // Injection
 
-  this.cache = this._input.value
-
-  this.capture = function () {
-    if (this._input.value.indexOf('$') < 0) { return }
-    this.cache = this._input.value
+  this.loadCache = function() {
+    this.cache = this._editor.getValue()
   }
 
-  this.inject = function (injection, at = this._input.selectionStart) {
-    this._input.value = this._input.value.substring(0, this._input.selectionStart) + injection + this._input.value.substring(this._input.selectionEnd)
-    this._input.selectionEnd = at + injection.length
+  this.capture = function () {
+    if (this._editor.getValue().indexOf('$') < 0) { return }
+    this.cache = this._editor.getValue()
+  }
+
+  this.inject = function (injection, at = this._editor.getModel().getOffsetAt(this._editor.getSelection().getStartPosition())) {
+    console.log("Hi from inject")
+    this._editor.setValue(this._editor.getValue().substring(0, at) + injection + this._editor.getValue().substring(this._editor.getModel().getOffsetAt(this._editor.getSelection().getEndPosition())))
+    this._editor.getSelection().setEndPositon(at + injection.length)
   }
 
   this.injectPath = function (path) {
-    if (this._input.value.indexOf('$') < 0) { return }
-    this._input.value = this._input.value.replace('$path', `"${path}"`)
+    console.log("injectPath")
+    if (this._editor.getValue().indexOf('$') < 0) { return }
+    this._editor.setValue(this._editor.getValue().replace('$path', `"${path}"`))
   }
 
   // Helpers
@@ -138,14 +141,14 @@ function Commander (client) {
 
     if (shape[word]) {
       if (append) {
-        this._input.value = this.cache.replace('$' + word + '+', this.template(shape[word], word) + ' $' + word + '+')
+        this._editor.setValue(this.cache.replace('$' + word + '+', this.template(shape[word], word) + ' $' + word + '+'))
       } else {
-        this._input.value = this.cache.replace('$' + word, this.template(shape[word], word))
+        this._editor.setValue(this.cache.replace('$' + word, this.template(shape[word], word)))
       }
     }
 
     if (end === true) {
-      this.cache = this._input.value
+      this.cache = this._editor.getValue()
     }
     if (run === true) {
       this.eval()
@@ -164,30 +167,52 @@ function Commander (client) {
 
   // Display
 
-  this.show = (expand = false) => {
-    if (this.isVisible === true && expand !== true) { return }
-    client.el.className = expand ? 'expand' : ''
+  this.show = () => {
+    if (this.isVisible === true) { return }
+    client.el.className = this.isExpanded ? 'expand' : 'min'
     this.isVisible = true
-    this._input.focus()
+    this._editor.focus()
   }
 
   this.hide = () => {
     if (this.isVisible !== true) { return }
     client.el.className = 'hidden'
     this.isVisible = false
-    this._input.blur()
+    document.body.focus();
   }
 
-  this.toggle = (expand = false) => {
+  this.expand = () => {
+    if (this.isExpanded === true) { return }
+    client.el.className = 'expand'
+    this.isExpanded = true
+    this._editor.focus()
+  }
+
+  this.collapse = () => {
+    if (this.isExpanded !== true) { return }
+    client.el.className = 'min'
+    this.isExpanded = false
+    this._editor.focus()
+  }
+
+  this.toggleExpand = () => {
+    if (this.isExpanded) {
+      this.collapse();
+    } else {
+      this.expand()
+    }
+  }
+
+  this.toggle = () => {
     if (this.isVisible !== true) {
-      this.show(expand)
+      this.show()
     } else {
       this.hide()
     }
   }
 
   this.length = function () {
-    return this._input.value.split('\n').length
+    return this._editor.getValue().split('\n').length
   }
 
   this.feedback = function () {
@@ -198,8 +223,10 @@ function Commander (client) {
   // Docs
 
   this.getCurrentWord = () => {
-    const pos = this._input.value.substr(0, this._input.selectionStart).lastIndexOf('(')
-    return this._input.value.substr(pos).split(' ')[0].replace(/\(/g, '').replace(/\)/g, '').trim()
+    const pos = this._editor.getValue().substr(0, this._editor.getModel().getOffsetAt(this._editor.getSelection().getStartPosition())).lastIndexOf('(')
+    var word = this._editor.getValue().substr(pos).split(' ')[0].replace(/\(/g, '').replace(/\)/g, '').trim()
+    console.log("Current word: " + word)
+    return word
   }
 
   this.getCurrentFunction = () => {
@@ -225,11 +252,11 @@ function Commander (client) {
   }
 
   this.lint = function () {
-    const value = this._input.value
+    const value = this._editor.getValue()
     if (value.split('(').length !== value.split(')').length) {
       return client.log('Uneven number of parens.')
     }
-    this._input.value = lintLISP(value)
+    this._editor.setValue(lintLISP(value))
   }
 
   // Splash

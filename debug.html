@@ -1,32 +1,55 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ronin</title>
-    <link rel="stylesheet" type="text/css" href="./links/main.css"/>
-<link rel="stylesheet" type="text/css" href="./links/theme.css"/>
 
-    <script type="text/javascript" src="./scripts/lib/acels.js"></script>
-<script type="text/javascript" src="./scripts/lib/lain.js"></script>
-<script type="text/javascript" src="./scripts/lib/source.js"></script>
-<script type="text/javascript" src="./scripts/lib/theme.js"></script>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ronin</title>
+  <link rel="stylesheet" type="text/css" href="./links/main.css" />
+  <link rel="stylesheet" type="text/css" href="./links/theme.css" />
 
-    <script type="text/javascript" src="./scripts/client.js"></script>
-<script type="text/javascript" src="./scripts/commander.js"></script>
-<script type="text/javascript" src="./scripts/library.js"></script>
-<script type="text/javascript" src="./scripts/surface.js"></script>
+  <script src="node_modules/monaco-editor/min/vs/loader.js"></script>
+  <script type="text/javascript" src="./scripts/lib/acels.js"></script>
+  <script type="text/javascript" src="./scripts/lib/lain.js"></script>
+  <script type="text/javascript" src="./scripts/lib/source.js"></script>
+  <script type="text/javascript" src="./scripts/lib/theme.js"></script>
 
-  </head>
-  <body>
-    <script>
-      const client = new Client()
-      client.install(document.body)
-      window.addEventListener('load', () => { 
-        client.start()
-      })
-    </script>
-  </body>
+  <script type="text/javascript" src="./scripts/client.js"></script>
+  <script type="text/javascript" src="./scripts/commander.js"></script>
+  <script type="text/javascript" src="./scripts/library.js"></script>
+  <script type="text/javascript" src="./scripts/surface.js"></script>
+
+</head>
+
+<body>
+  <script>
+    const client = new Client()
+    client.install(document.body)
+    window.addEventListener('load', () => {
+      client.start()
+    })
+  </script>
+  <script>
+    require.config({ paths: { vs: '../node_modules/monaco-editor/min/vs' } });
+    require(['vs/editor/editor.main'], function () {
+      client.commander._editor = monaco.editor.create(document.getElementById('editor'), {
+        value: "(clear)",
+        language: 'clojure',
+        minimap: {enabled: false},
+        theme: 'vs-dark',
+        scrollBeyondLastColumn: false,
+        scrollBeyondLastLine: false,
+        automaticLayout: true,
+        wordWrap: "bounded",
+        scrollbar: {
+          vertical: "auto",
+          horizontal: "auto"
+        }
+      });
+      client.commander.loadCache()
+    });
+  </script>
+</body>
+
 </html>

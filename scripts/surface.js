@@ -34,7 +34,7 @@ function Surface (client) {
   }
 
   this.onResize = function () {
-    if (client.commander._input.value === '') {
+    if (client.commander._editor.getValue() === '') {
       this.maximize()
     }
     const f = this.getFrame()
